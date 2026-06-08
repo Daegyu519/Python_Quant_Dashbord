@@ -1,0 +1,75 @@
+# =============================================================================
+# Multi-Stage Dockerfile — Python API Server
+# =============================================================================
+# Stage 1: builder (의존성 설치)
+# Stage 2: production (최소 이미지)
+# =============================================================================
+
+# ── Stage 1: Builder ──
+FROM python:3.12-slim-bookworm AS builder
+
+WORKDIR /app
+
+# 시스템 의존성 (TA-Lib 빌드 포함)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    gcc \
+    g++ \
+    gfortran \
+    libta-lib-dev \
+    libopenblas-dev \
+    liblapack-dev \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# pip 최신화 + 가상환경
+RUN pip install --upgrade pip setuptools wheel
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# ── Stage 2: Production ──
+FROM python:3.12-slim-bookworm AS production
+
+WORKDIR /app
+
+# 런타임 의존성만 설치
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libopenblas-base \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# builder에서 파이썬 패키지만 복사
+COPY --from=builder /usr/local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages
+COPY --from=builder /usr/local/bin /usr/local/bin
+
+# 앱 코드 복사
+COPY . .
+
+# 비루트 사용자 생성 (보안)
+RUN groupadd -r quant && useradd -r -g quant quant
+RUN chown -R quant:quant /app
+USER quant
+
+# 환경 변수
+ENV PYTHONPATH=/app
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1
+
+# 포트
+EXPOSE 8000
+
+# Numba 캐시 경로
+ENV NUMBA_CACHE_DIR=/app/.numba_cache
+
+# 헬스체크
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+    CMD curl -f http://localhost:8000/health || exit 1
+
+# 실행 (gunicorn + uvicorn workers)
+CMD ["python", "-m", "uvicorn", "app.api.main:app", \
+     "--host", "0.0.0.0", \
+     "--port", "8000", \
+     "--workers", "4", \
+     "--loop", "uvloop", \
+     "--http", "httptools", \
+     "--access-log"]

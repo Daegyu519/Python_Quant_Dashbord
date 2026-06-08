@@ -1,0 +1,303 @@
+version: "3.9"
+
+# =============================================================================
+# AI Quant Trading Platform — Docker Compose
+# =============================================================================
+# 개발 환경 전체 스택.
+# 프로덕션은 Kubernetes 배포 권장.
+# =============================================================================
+
+name: quant-platform
+
+networks:
+  quant_net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+
+volumes:
+  postgres_data:
+  timescale_data:
+  clickhouse_data:
+  redis_data:
+  duckdb_data:
+  model_data:
+
+x-common-env: &common-env
+  TZ: Asia/Seoul
+  PYTHONUNBUFFERED: "1"
+  PYTHONDONTWRITEBYTECODE: "1"
+
+# ─────────────────────────────────────────────
+# 인프라 서비스
+# ─────────────────────────────────────────────
+services:
+
+  # PostgreSQL + TimescaleDB (메인 OLTP + 시계열)
+  timescaledb:
+    image: timescale/timescaledb-ha:pg16-latest
+    container_name: quant-timescaledb
+    restart: unless-stopped
+    environment:
+      <<: *common-env
+      POSTGRES_USER: ${POSTGRES_USER:-quant_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-quant_pass}
+      POSTGRES_DB: ${POSTGRES_DB:-quant_db}
+      POSTGRES_INITDB_ARGS: "--encoding=UTF-8 --lc-collate=C --lc-ctype=C"
+      # TimescaleDB 최적화
+      TS_TUNE_MAX_CONNS: "100"
+      TS_TUNE_MAX_BG_WORKERS: "16"
+    volumes:
+      - timescale_data:/home/postgres/pgdata/data
+      - ./app/data/sql/timescale_schema.sql:/docker-entrypoint-initdb.d/01_timescale.sql
+    ports:
+      - "5432:5432"
+    networks:
+      - quant_net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-quant_user}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    command: >
+      postgres
+        -c shared_preload_libraries=timescaledb
+        -c max_connections=200
+        -c shared_buffers=2GB
+        -c effective_cache_size=6GB
+        -c maintenance_work_mem=512MB
+        -c checkpoint_completion_target=0.9
+        -c wal_buffers=16MB
+        -c default_statistics_target=100
+        -c random_page_cost=1.1
+        -c effective_io_concurrency=200
+        -c work_mem=32MB
+        -c min_wal_size=1GB
+        -c max_wal_size=4GB
+        -c max_worker_processes=16
+        -c max_parallel_workers_per_gather=4
+        -c max_parallel_workers=16
+
+  # ClickHouse (초고속 분석)
+  clickhouse:
+    image: clickhouse/clickhouse-server:24.3-alpine
+    container_name: quant-clickhouse
+    restart: unless-stopped
+    environment:
+      <<: *common-env
+      CLICKHOUSE_DB: quant
+      CLICKHOUSE_USER: ${CLICKHOUSE_USER:-default}
+      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD:-}
+    volumes:
+      - clickhouse_data:/var/lib/clickhouse
+      - ./app/data/sql/clickhouse_schema.sql:/docker-entrypoint-initdb.d/01_schema.sql
+      - ./infra/docker/clickhouse-config.xml:/etc/clickhouse-server/config.d/custom.xml
+    ports:
+      - "8123:8123"   # HTTP
+      - "9000:9000"   # Native TCP
+    networks:
+      - quant_net
+    healthcheck:
+      test: ["CMD", "clickhouse-client", "--query", "SELECT 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    ulimits:
+      nofile:
+        soft: 262144
+        hard: 262144
+
+  # Redis (캐시 + Pub/Sub + Celery 브로커)
+  redis:
+    image: redis:7.2-alpine
+    container_name: quant-redis
+    restart: unless-stopped
+    environment:
+      <<: *common-env
+    volumes:
+      - redis_data:/data
+      - ./infra/docker/redis.conf:/usr/local/etc/redis/redis.conf
+    ports:
+      - "6379:6379"
+    networks:
+      - quant_net
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    command: redis-server /usr/local/etc/redis/redis.conf
+    sysctls:
+      net.core.somaxconn: 65535
+
+  # ─────────────────────────────────────────────
+  # 애플리케이션 서비스
+  # ─────────────────────────────────────────────
+
+  # FastAPI 메인 서버
+  api:
+    build:
+      context: .
+      dockerfile: infra/docker/Dockerfile.api
+      target: production
+    container_name: quant-api
+    restart: unless-stopped
+    environment:
+      <<: *common-env
+      ENVIRONMENT: ${ENVIRONMENT:-development}
+      POSTGRES_HOST: timescaledb
+      POSTGRES_PORT: 5432
+      POSTGRES_USER: ${POSTGRES_USER:-quant_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-quant_pass}
+      POSTGRES_DB: ${POSTGRES_DB:-quant_db}
+      CLICKHOUSE_HOST: clickhouse
+      REDIS_HOST: redis
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      SERVER_HOST: 0.0.0.0
+      SERVER_PORT: 8000
+      SERVER_WORKERS: ${API_WORKERS:-4}
+    volumes:
+      - ./app:/app/app
+      - model_data:/app/data/models
+      - duckdb_data:/app/data
+    ports:
+      - "8000:8000"
+    networks:
+      - quant_net
+    depends_on:
+      timescaledb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Celery Worker (백테스팅, ML 학습 비동기 처리)
+  worker:
+    build:
+      context: .
+      dockerfile: infra/docker/Dockerfile.api
+    container_name: quant-worker
+    restart: unless-stopped
+    environment:
+      <<: *common-env
+      POSTGRES_HOST: timescaledb
+      REDIS_HOST: redis
+      CLICKHOUSE_HOST: clickhouse
+      ML_USE_GPU: "false"
+    volumes:
+      - ./app:/app/app
+      - model_data:/app/data/models
+    networks:
+      - quant_net
+    depends_on:
+      - redis
+      - timescaledb
+    command: >
+      celery -A app.tasks.celery_app worker
+        --loglevel=info
+        --concurrency=4
+        --queues=backtest,ml,signals,default
+        --max-tasks-per-child=100
+
+  # Celery Beat (스케줄러)
+  scheduler:
+    build:
+      context: .
+      dockerfile: infra/docker/Dockerfile.api
+    container_name: quant-scheduler
+    restart: unless-stopped
+    environment:
+      <<: *common-env
+      POSTGRES_HOST: timescaledb
+      REDIS_HOST: redis
+    volumes:
+      - ./app:/app/app
+    networks:
+      - quant_net
+    depends_on:
+      - redis
+    command: >
+      celery -A app.tasks.celery_app beat
+        --loglevel=info
+        --scheduler=celery.beat.PersistentScheduler
+
+  # ─────────────────────────────────────────────
+  # 프론트엔드
+  # ─────────────────────────────────────────────
+
+  # Next.js 대시보드
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: quant-frontend
+    restart: unless-stopped
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8000
+      NEXT_PUBLIC_WS_URL: ws://localhost:8000
+    ports:
+      - "3000:3000"
+    networks:
+      - quant_net
+    depends_on:
+      - api
+
+  # ─────────────────────────────────────────────
+  # 모니터링 (선택적)
+  # ─────────────────────────────────────────────
+
+  # Prometheus (메트릭 수집)
+  prometheus:
+    image: prom/prometheus:v2.51.0
+    container_name: quant-prometheus
+    restart: unless-stopped
+    volumes:
+      - ./infra/docker/prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+    networks:
+      - quant_net
+    profiles: ["monitoring"]
+
+  # Grafana (시각화 대시보드)
+  grafana:
+    image: grafana/grafana:10.4.0
+    container_name: quant-grafana
+    restart: unless-stopped
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:-admin123}
+    volumes:
+      - ./infra/docker/grafana:/etc/grafana/provisioning
+    ports:
+      - "3001:3000"
+    networks:
+      - quant_net
+    depends_on:
+      - prometheus
+    profiles: ["monitoring"]
+
+  # Flower (Celery 모니터링)
+  flower:
+    build:
+      context: .
+      dockerfile: infra/docker/Dockerfile.api
+    container_name: quant-flower
+    restart: unless-stopped
+    environment:
+      REDIS_HOST: redis
+    command: >
+      celery -A app.tasks.celery_app flower
+        --port=5555
+        --basic_auth=${FLOWER_USER:-admin}:${FLOWER_PASSWORD:-admin123}
+    ports:
+      - "5555:5555"
+    networks:
+      - quant_net
+    depends_on:
+      - redis
+    profiles: ["monitoring"]

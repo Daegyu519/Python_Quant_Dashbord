@@ -1,0 +1,99 @@
+# =============================================================================
+# .gitignore — AI Quant Trading Platform
+# =============================================================================
+
+# ── 비밀/환경 변수 (절대 커밋 금지!) ─────────────────────────────
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+secrets.*
+# .env.example 은 커밋함(플레이스홀더 템플릿)
+!.env.example
+
+# ── Python ───────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+dist/
+*.egg-info/
+.eggs/
+pip-wheel-metadata/
+
+# ── 가상환경 ─────────────────────────────────────────────────
+venv/
+env/
+.venv/
+ENV/
+
+# ── 테스트/린트/타입 캐시 ────────────────────────────────────
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml
+
+# ── Jupyter / Streamlit ──────────────────────────────────────
+.ipynb_checkpoints/
+.streamlit/secrets.toml
+
+# ── 데이터 & DB ──────────────────────────────────────────────
+data/
+*.duckdb
+*.db
+*.sqlite
+*.sqlite3
+*.parquet
+*.csv
+
+# ── ML 모델 가중치 ───────────────────────────────────────────
+*.pkl
+*.joblib
+*.h5
+*.pt
+*.pth
+*.onnx
+
+# ── 생성된 차트/리포트 산출물 ────────────────────────────────
+charts/
+reports/
+output/
+
+# ── 로그 ─────────────────────────────────────────────────────
+logs/
+*.log
+
+# ── 프론트엔드 (Next.js) ─────────────────────────────────────
+node_modules/
+.next/
+out/
+frontend/node_modules/
+frontend/.next/
+
+# ── IDE / 에디터 ─────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# ── OS ───────────────────────────────────────────────────────
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Thumbs.db
+
+# ── Numba 캐시 ───────────────────────────────────────────────
+__numba_cache__/
+
+# ── 개인 자료 (포트폴리오 공개 제외) ────────────────────────
+면접_설명서.docx
+*.docx
