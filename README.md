@@ -49,9 +49,13 @@ API 키가 없어도 동작합니다 (무료 Yahoo Finance 데이터, 약 15분 
 > 📌 _대시보드 실행 후 화면을 캡처해 `docs/screenshots/` 에 넣고 아래 경로를 연결하세요._
 
 ```
-![실시간 캔들](docs/screenshots/realtime.png)
-![포트폴리오 3D](docs/screenshots/frontier.png)
-![가치·ML 분석](docs/screenshots/value_ml.png)
+![실시간 캔들]<img width="1092" height="743" alt="image" src="https://github.com/user-attachments/assets/5850722b-7243-44a5-8754-6dc1e648b249" />
+![포트폴리오 3D]<img width="1013" height="738" alt="스크린샷 2026-06-08 오후 5 12 27" src="https://github.com/user-attachments/assets/28ece42e-4f0f-4dbd-a48e-8493058d5f12" />
+
+![가치·ML 분석]<img width="1040" height="462" alt="image" src="https://github.com/user-attachments/assets/93743b39-c55b-4a09-bd3d-bd8598a88fb3" />
+<img width="1068" height="703" alt="스크린샷 2026-06-08 오후 5 15 01" src="https://github.com/user-attachments/assets/2bb532b7-611b-4bbe-86fa-945b1066316f" />
+<img width="1045" height="591" alt="스크린샷 2026-06-08 오후 5 15 21" src="https://github.com/user-attachments/assets/83be0429-c359-4619-8cfb-fe8a5837f5ef" />
+
 ```
 
 ---
