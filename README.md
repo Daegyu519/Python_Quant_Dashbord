@@ -8,9 +8,9 @@
 ![Plotly](https://img.shields.io/badge/Plotly-3F4F75?logo=plotly&logoColor=white)
 ![License](https://img.shields.io/badge/License-Educational-blue)
 
-**🔗 라이브 데모 →** https://daegyu-quant-dashboard.streamlit.app  · 아무 기기·모바일에서 바로 접속
+**🔗 라이브 데모 →** https://daegyu519-quant.streamlit.app  · 아무 기기·모바일에서 바로 접속
 
-<a href="https://daegyu-quant-dashboard.streamlit.app">
+<a href="https://daegyu519-quant.streamlit.app">
   <img src="docs/qr_live_demo.png" width="150" alt="라이브 데모 QR — 모바일로 스캔" />
 </a>
 
