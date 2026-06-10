@@ -1,111 +1,21 @@
 # =============================================================================
-# AI Quant Trading Platform — Production Dependencies
+# 실시간 대시보드(dashboard.py) 실행용 의존성 — Streamlit Cloud 배포 대상
+# =============================================================================
+# 전체 백엔드 플랫폼(FastAPI·Celery·DB 등) 의존성은 requirements-full.txt 참고.
 # =============================================================================
 
-# ── Core Framework ──
-fastapi==0.115.0
-uvicorn[standard]==0.30.6
-uvloop==0.20.0
-httptools==0.6.4
-gunicorn==23.0.0
-pydantic==2.9.2
-pydantic-settings==2.5.2
+# ── 대시보드 / 시각화 ──
+streamlit>=1.40
+plotly>=5.24
 
-# ── Async & Networking ──
-aiohttp==3.10.5
-aiofiles==24.1.0
-websockets==13.1
-httpx==0.27.2
+# ── 데이터 ──
+yfinance>=0.2.50
+pandas>=2.2
+numpy>=1.26,<2.3
 
-# ── Database ──
-sqlalchemy[asyncio]==2.0.35
-asyncpg==0.29.0         # PostgreSQL async
-psycopg2-binary==2.9.9  # PostgreSQL sync (Alembic용)
-alembic==1.13.3
-clickhouse-driver==0.2.9
-clickhouse-connect==0.8.3
-duckdb==1.1.1
-redis[hiredis]==5.1.0
-aioredis==2.0.1
-
-# ── Data Processing ──
-numpy==2.1.1
-pandas==2.2.3
-polars==1.8.2
-pyarrow==17.0.0
-
-# ── Performance & JIT ──
-numba==0.60.0
-numexpr==2.10.1
-bottleneck==1.4.0
-
-# ── Quant / Technical Analysis ──
-yfinance==0.2.44
-ta==0.11.0              # Technical Analysis
-vectorbt==0.26.2        # 벡터화 백테스팅
-scipy==1.14.1
-statsmodels==0.14.3
-
-# ── 무료 데이터 소스 ──
-finance-datareader==0.9.93   # ✅ 한국 주식 (KRX) - 키 불필요
-pykrx==1.0.46                # ✅ KRX 공식 데이터 - 키 불필요
-pycoingecko==3.1.0           # ✅ 암호화폐 (CoinGecko) - 키 불필요
-fredapi==0.5.2               # 📝 FRED 거시경제 (무료 키 필요)
-
-# ── Machine Learning ──
-scikit-learn==1.5.2
-xgboost==2.1.1
-lightgbm==4.5.0
-optuna==4.0.0
-shap==0.46.0            # AI 설명가능성
-joblib==1.4.2
-
-# ── Deep Learning (선택적) ──
-# torch==2.4.1          # PyTorch (무거우므로 별도 설치)
-
-# ── Visualization ──
-plotly==5.24.1
-matplotlib==3.9.2
-seaborn==0.13.2
-
-# ── Task Queue ──
-celery[redis]==5.4.0
-flower==2.0.1
-
-# ── Logging & Monitoring ──
-structlog==24.4.0
-python-json-logger==2.0.7
-prometheus-client==0.21.0
-opentelemetry-api==1.27.0
-opentelemetry-sdk==1.27.0
-
-# ── Security ──
-python-jose[cryptography]==3.3.0
-passlib[bcrypt]==1.7.4
-python-multipart==0.0.12
-
-# ── Retry & Reliability ──
-tenacity==9.0.0
-circuit-breaker==1.4.0
-
-# ── Caching ──
-aiocache==0.12.3
-cachetools==5.5.0
-
-# ── Configuration ──
-python-dotenv==1.0.1
-
-# ── Testing ──
-pytest==8.3.3
-pytest-asyncio==0.24.0
-pytest-cov==5.0.0
-pytest-mock==3.14.0
-httpx==0.27.2           # FastAPI 테스트용
-factory-boy==3.3.1      # 테스트 픽스처
-
-# ── Development ──
-ipython==8.28.0
-black==24.10.0
-ruff==0.6.9
-mypy==1.11.2
-pre-commit==4.0.1
+# ── 가치·ML 분석 페이지 ──
+scipy>=1.13
+scikit-learn>=1.5
+xgboost>=2.1
+lightgbm>=4.5
+hmmlearn>=0.3.2

@@ -8,6 +8,8 @@
 ![Plotly](https://img.shields.io/badge/Plotly-3F4F75?logo=plotly&logoColor=white)
 ![License](https://img.shields.io/badge/License-Educational-blue)
 
+**🔗 라이브 데모 →** https://daegyu-quant-dashboard.streamlit.app  · 아무 기기·모바일에서 바로 접속
+
 종목(티커)을 직접 고르면 **실시간 시세 · 기술적 지표 · 포트폴리오 최적화 · 가치/ML 분석 ·
 애널리스트 목표가 · 퀀트 전략 스코어**까지 한 화면에서 분석합니다. Docker·별도 서버 없이
 파이썬 프로세스 하나로 동작합니다.
@@ -19,7 +21,7 @@
 ```bash
 git clone https://github.com/Daegyu519/Python_Quant_Dashbord.git
 cd Python_Quant_Dashbord
-pip install -r requirements.txt streamlit
+pip install -r requirements.txt
 streamlit run dashboard.py        # → http://localhost:8501
 ```
 
