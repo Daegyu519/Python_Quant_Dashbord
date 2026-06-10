@@ -573,41 +573,49 @@ def chart_confidence(res: dict) -> go.Figure:
     return fig
 
 
-def run_advanced(symbols: list[str], frames: dict) -> dict:
-    """종목별 가치투자 + ML 분석 실행. 무거우므로 버튼으로만 호출."""
+@st.cache_data(ttl=21600, show_spinner=False)   # 6시간 캐시 → 같은 종목 재분석은 즉시
+def analyze_one(symbol: str) -> dict | None:
+    """종목 1개의 가치투자 + ML + 애널리스트 분석 (무거움). 결과를 캐싱한다."""
     from app.value_investing.screener import ValueInvestingScreener
     from app.ml.models.improved_ensemble import ImprovedEnsembleModel
 
-    screener = ValueInvestingScreener()
+    df = fetch_daily(symbol)
+    if df is None or len(df) <= 50:
+        return None
+    try:
+        vs = run_async(ValueInvestingScreener().analyze(symbol))
+    except Exception:
+        vs = None
+    try:
+        model = ImprovedEnsembleModel()
+        model.fit(_Frame(df, symbol))
+        pred = model.predict(_Frame(df, symbol), value_score=(vs.total_score if vs else 50.0))
+    except Exception:
+        pred = None
+    ts, _ = tech_score(df)
+    val = vs.total_score if vs else 50.0
+    mlp = (pred.up_probability * 100) if pred else 50.0
+    final = float(np.clip(ts * 0.20 + val * 0.40 + mlp * 0.40, 0, 100))
+    analyst = fetch_analyst(symbol)
+    cur = float(df["close"].iloc[-1])
+    ann_vol = float(df["close"].pct_change().dropna().std() * np.sqrt(252))
+    move = cur * ann_vol * np.sqrt(21 / 252)   # 1개월(21거래일) ±1σ 예상 변동폭
+    return dict(vs=vs, pred=pred, tech=ts, final=final,
+                analyst=analyst, cur=cur, band=(cur - move, cur + move))
+
+
+def run_advanced(symbols: list[str], frames: dict) -> dict:
+    """종목별 가치·ML 분석. analyze_one(캐시)을 호출 → 재분석 시 즉시."""
     res = {}
     prog = st.progress(0.0, text="분석 준비 중...")
     for i, sym in enumerate(symbols):
         if sym not in frames:
             continue
-        prog.progress(i / len(symbols), text=f"{name_of(sym)} 가치분석 중...")
-        try:
-            vs = run_async(screener.analyze(sym))
-        except Exception:
-            vs = None
-        prog.progress((i + 0.5) / len(symbols), text=f"{name_of(sym)} ML 학습 중...")
-        try:
-            model = ImprovedEnsembleModel()
-            model.fit(_Frame(frames[sym], sym))
-            pred = model.predict(_Frame(frames[sym], sym),
-                                 value_score=(vs.total_score if vs else 50.0))
-        except Exception:
-            pred = None
-        ts, _ = tech_score(frames[sym])
-        val = vs.total_score if vs else 50.0
-        mlp = (pred.up_probability * 100) if pred else 50.0
-        final = float(np.clip(ts * 0.20 + val * 0.40 + mlp * 0.40, 0, 100))
-
-        analyst = fetch_analyst(sym)
-        cur = float(frames[sym]["close"].iloc[-1])
-        ann_vol = float(frames[sym]["close"].pct_change().dropna().std() * np.sqrt(252))
-        move = cur * ann_vol * np.sqrt(21 / 252)   # 1개월(21거래일) ±1σ 예상 변동폭
-        res[sym] = dict(vs=vs, pred=pred, tech=ts, final=final,
-                        analyst=analyst, cur=cur, band=(cur - move, cur + move))
+        prog.progress(i / len(symbols),
+                      text=f"{name_of(sym)} 분석 중… (첫 실행은 종목당 수십 초, 이후 캐시되면 즉시)")
+        r = analyze_one(sym)
+        if r is not None:
+            res[sym] = r
         prog.progress((i + 1) / len(symbols), text=f"{name_of(sym)} 완료")
     prog.empty()
     return res
