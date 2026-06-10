@@ -48,6 +48,37 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))  # app 패키지 
 
 st.set_page_config(page_title="실시간 주식 대시보드", page_icon="📈", layout="wide")
 
+# 모바일 반응형 — 좁은 화면(≤640px)에서 가로 컬럼을 세로로 쌓아 찌부됨 방지
+st.markdown(
+    """
+    <style>
+    @media (max-width: 640px) {
+        /* st.columns 가로 배치를 세로로 전환 */
+        [data-testid="stHorizontalBlock"] {
+            flex-direction: column !important;
+            gap: 0.4rem !important;
+        }
+        [data-testid="stColumn"], [data-testid="column"] {
+            width: 100% !important;
+            flex: 1 1 100% !important;
+            min-width: 100% !important;
+        }
+        /* 좌우 여백 축소로 가로 공간 확보 */
+        .block-container {
+            padding-left: 0.7rem !important;
+            padding-right: 0.7rem !important;
+            padding-top: 1rem !important;
+        }
+        /* 표·차트가 화면 밖으로 안 넘치게 */
+        [data-testid="stDataFrame"], [data-testid="stPlotlyChart"] {
+            overflow-x: auto !important;
+        }
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
 COLORS = {
     "bg": "#0d1117", "panel": "#161b22",
     "green": "#00d4aa", "red": "#ff4757",
