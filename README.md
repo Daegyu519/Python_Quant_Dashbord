@@ -10,6 +10,12 @@
 
 **🔗 라이브 데모 →** https://daegyu-quant-dashboard.streamlit.app  · 아무 기기·모바일에서 바로 접속
 
+<a href="https://daegyu-quant-dashboard.streamlit.app">
+  <img src="docs/qr_live_demo.png" width="150" alt="라이브 데모 QR — 모바일로 스캔" />
+</a>
+
+> 📱 위 QR을 휴대폰 카메라로 스캔하면 대시보드가 바로 열립니다.
+
 종목(티커)을 직접 고르면 **실시간 시세 · 기술적 지표 · 포트폴리오 최적화 · 가치/ML 분석 ·
 애널리스트 목표가 · 퀀트 전략 스코어**까지 한 화면에서 분석합니다. Docker·별도 서버 없이
 파이썬 프로세스 하나로 동작합니다.
