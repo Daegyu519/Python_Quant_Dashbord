@@ -5,7 +5,7 @@
 # =============================================================================
 
 # ── 대시보드 / 시각화 ──
-streamlit>=1.40
+streamlit>=1.49        # width="stretch" API 사용 (use_container_width 대체)
 plotly>=5.24
 
 # ── 데이터 ──
@@ -19,3 +19,12 @@ scikit-learn>=1.5
 xgboost>=2.1
 lightgbm>=4.5
 hmmlearn>=0.3.2
+
+# ── 뉴스·AI 심리 페이지 (Gemini 다단계 파이프라인, 무료 티어) ──
+google-genai>=1.0
+pydantic>=2.7
+
+# (선택) 로컬 FinBERT 뉴스 감성 — Gemini와 앙상블, 키 없이도 점수 산출.
+#   무거우므로 슬림 배포엔 미포함. 로컬에서: pip install torch transformers
+# torch>=2.4            # Apple Silicon MPS 지원 내장
+# transformers>=4.44    # ProsusAI/finbert (금융 감성 BERT)

@@ -96,4 +96,16 @@ __numba_cache__/
 
 # ── 개인 자료 (포트폴리오 공개 제외) ────────────────────────
 면접_설명서.docx
+면접_설명서.md
 *.docx
+
+# 로컬 영속 저장(모의 포트폴리오 등) — 커밋 안 함
+.data/
+
+# ── 🔒 비공개: 자동매매 봇 & 독자 노하우 (절대 커밋 금지) ──────
+app/trading/                      # 자동매매 봇(신호→사이징→모의체결)
+app/tasks/                        # Celery 앱·봇 스케줄러
+app/analytics/analysis.py         # 봇용 분석 결합 코어
+app/tests/unit/test_trading.py    # 봇 테스트
+claude.md                         # 자동매매·퀀트 설계 서술(로컬 전용)
+# app/news/ 는 의도적으로 제외하지 않음(추후 공개 가능). 이번 커밋엔 미포함.

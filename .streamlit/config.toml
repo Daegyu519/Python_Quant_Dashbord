@@ -1,0 +1,12 @@
+# Streamlit 네이티브 테마 — app/ui/theme.py 의 COLORS(다크)와 동기화 (코이핀형 모던데스크)
+# ⚠️ 이 파일은 서버 '시작 시'에만 읽힘 — 수정 후 streamlit 재시작 필요
+[theme]
+base = "dark"
+primaryColor = "#3b9eff"            # 코이핀형 블루 강조 (사이드바에서 변경 가능)
+backgroundColor = "#0e1320"         # 딥 슬레이트-네이비
+secondaryBackgroundColor = "#161d2b"
+textColor = "#c3ccdb"
+font = "sans serif"
+
+[server]
+runOnSave = true

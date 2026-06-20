@@ -56,12 +56,15 @@ fredapi==0.5.2               # 📝 FRED 거시경제 (무료 키 필요)
 scikit-learn==1.5.2
 xgboost==2.1.1
 lightgbm==4.5.0
+hmmlearn==0.3.2         # HMM 시장 레짐 감지 (improved_ensemble). slim 에도 있음 — 백엔드 누락분 보강.
 optuna==4.0.0
 shap==0.46.0            # AI 설명가능성
 joblib==1.4.2
 
 # ── Deep Learning (선택적) ──
-# torch==2.4.1          # PyTorch (무거우므로 별도 설치)
+# torch==2.4.1          # PyTorch (무거우므로 별도 설치). Apple Silicon: MPS 내장.
+# transformers>=4.44    # FinBERT 로컬 뉴스 감성(ProsusAI/finbert). torch 필요.
+#                       # pip install torch transformers  → 키 없이도 심리점수 활성화.
 
 # ── Visualization ──
 plotly==5.24.1

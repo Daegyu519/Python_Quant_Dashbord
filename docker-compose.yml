@@ -230,18 +230,23 @@ services:
   # 프론트엔드
   # ─────────────────────────────────────────────
 
-  # Next.js 대시보드
+  # Streamlit 대시보드 (Path B — 프론트는 Streamlit 유지)
+  # (이전엔 비어있는 ./frontend 의 Next.js 를 빌드하려다 실패하던 자리)
   frontend:
     build:
-      context: ./frontend
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: infra/docker/Dockerfile.streamlit
     container_name: quant-frontend
     restart: unless-stopped
     environment:
-      NEXT_PUBLIC_API_URL: http://localhost:8000
-      NEXT_PUBLIC_WS_URL: ws://localhost:8000
+      <<: *common-env
+      REDIS_HOST: redis
+      API_BASE_URL: http://api:8000        # 향후 대시보드가 백엔드 호출 시 사용
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}  # 뉴스·AI 심리 페이지 (선택)
+    volumes:
+      - ./app:/app/app
     ports:
-      - "3000:3000"
+      - "8501:8501"
     networks:
       - quant_net
     depends_on:
