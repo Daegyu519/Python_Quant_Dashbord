@@ -103,9 +103,15 @@ __numba_cache__/
 .data/
 
 # ── 🔒 비공개: 자동매매 봇 & 독자 노하우 (절대 커밋 금지) ──────
-app/trading/                      # 자동매매 봇(신호→사이징→모의체결)
-app/tasks/                        # Celery 앱·봇 스케줄러
-app/analytics/analysis.py         # 봇용 분석 결합 코어
-app/tests/unit/test_trading.py    # 봇 테스트
-claude.md                         # 자동매매·퀀트 설계 서술(로컬 전용)
-# app/news/ 는 의도적으로 제외하지 않음(추후 공개 가능). 이번 커밋엔 미포함.
+# (주의: .gitignore 는 인라인 주석 미지원 — 패턴은 반드시 단독 줄에)
+# 자동매매 봇(신호→사이징→모의체결) · Celery 앱·봇 스케줄러
+app/trading/
+app/tasks/
+# 봇용 분석 결합 코어 · 봇 테스트
+app/analytics/analysis.py
+app/tests/unit/test_trading.py
+# 자동매매·퀀트 설계 서술 + 봇 성과 대시보드 (로컬 전용)
+claude.md
+bot_dashboard.py
+# 뉴스 LLM(Gemini) 파이프라인 — 실수 커밋 방지로 무시. 공개하려면 이 줄 삭제.
+app/news/
